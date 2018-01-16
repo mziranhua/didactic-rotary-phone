@@ -8,7 +8,7 @@
 Vagrant.configure("2") do |config|
   config.vm.box = "bento/centos-7.3"
   
-  share_path = "#{share_path}"
+  share_path = "/home/vagrant/share/k8s"
 
   config.vm.synced_folder "k8_cluster", "#{share_path}"
 
@@ -50,7 +50,7 @@ minions.each do |v_m, addr|
     end
     kube_machine.vm.provision "shell", inline: <<-SHELL
       cp #{share_path}/etc/kubernetes/kubelet /etc/kubernetes/kubelet
-      sed -i "s/SED_WILL_OVERRIDE_HOSTNAME_OVERRIDE/${HOSTNAME}/" /etc/kubernetes/kubelet 
+      sed -i "s/SED_WILL_OVERRIDE_HOSTNAME/${HOSTNAME}/" /etc/kubernetes/kubelet 
       systemctl enable kube-proxy kubelet docker
       systemctl start kube-proxy kubelet docker
       sleep 5
@@ -74,7 +74,6 @@ end
       cp -f #{share_path}/etc/hosts /etc/hosts
       rm -f /etc/localtime
       ln -s /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
-      #wget -qO- https://get.docker.com/ | sh
       systemctl enable ntpd && systemctl start ntpd && systemctl status ntpd
       # Master config is the same on all k8s hosts
       cp #{share_path}/etc/kubernetes/config /etc/kubernetes/config  
