@@ -8,7 +8,9 @@
 Vagrant.configure("2") do |config|
   config.vm.box = "bento/centos-7.3"
   
-  config.vm.synced_folder "k8_cluster", "/home/vagrant/share/k8"
+  share_path = "#{share_path}"
+
+  config.vm.synced_folder "k8_cluster", "#{share_path}"
 
    config.vm.provider "virtualbox" do |vb|
      # Customize the amount of memory on the VM:
@@ -23,8 +25,8 @@ config.vm.define "master" do |master|
   end
   master.vm.provision "shell", inline: <<-SHELL
     yum -y install etcd 
-    cp /home/vagrant/share/k8/etc/etcd/etcd.conf /etc/etcd/etcd.conf
-    cp /home/vagrant/share/k8/etc/kubernetes/apiserver /etc/kubernetes/apiserver
+    cp #{share_path}/etc/etcd/etcd.conf /etc/etcd/etcd.conf
+    cp #{share_path}/etc/kubernetes/apiserver /etc/kubernetes/apiserver
     systemctl enable etcd kube-apiserver kube-controller-manager kube-scheduler 
     systemctl start etcd kube-apiserver kube-controller-manager kube-scheduler 
     sleep 5
@@ -47,7 +49,7 @@ minions.each do |v_m, addr|
       vb.name = "#{v_m}"
     end
     kube_machine.vm.provision "shell", inline: <<-SHELL
-      cp /home/vagrant/share/k8/etc/kubernetes/kubelet /etc/kubernetes/kubelet
+      cp #{share_path}/etc/kubernetes/kubelet /etc/kubernetes/kubelet
       sed -i "s/SED_WILL_OVERRIDE_HOSTNAME_OVERRIDE/${HOSTNAME}/" /etc/kubernetes/kubelet 
       systemctl enable kube-proxy kubelet docker
       systemctl start kube-proxy kubelet docker
@@ -61,7 +63,7 @@ end
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
    config.vm.provision "shell", inline: <<-SHELL
-      cp /home/vagrant/share/k8/etc/yum.repos.d/docker.repo /etc/yum.repos.d
+      cp #{share_path}/etc/yum.repos.d/docker.repo /etc/yum.repos.d
       yum clean all
       yum --enablerepo=virt7-docker-common-release -y install rsync wget emacs-nox ntp kubernetes docker
       echo '(setq backup-directory-alist `(("." . "~/.saves")))' >> /home/vagrant/.emacs
@@ -69,12 +71,12 @@ end
       chown vagrant:vagrant /home/vagrant/.emacs
       cp /home/vagrant/.emacs /root/
       chown root:root /root/.emacs 
-      cp -f /home/vagrant/share/k8/etc/hosts /etc/hosts
+      cp -f #{share_path}/etc/hosts /etc/hosts
       rm -f /etc/localtime
       ln -s /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
       #wget -qO- https://get.docker.com/ | sh
       systemctl enable ntpd && systemctl start ntpd && systemctl status ntpd
       # Master config is the same on all k8s hosts
-      cp /home/vagrant/share/k8/etc/kubernetes/config /etc/kubernetes/config  
+      cp #{share_path}/etc/kubernetes/config /etc/kubernetes/config  
     SHELL
 end
