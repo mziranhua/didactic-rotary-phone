@@ -51,10 +51,13 @@ minions.each do |v_m, addr|
     kube_machine.vm.provision "shell", inline: <<-SHELL
       cp #{share_path}/etc/kubernetes/kubelet /etc/kubernetes/kubelet
       sed -i "s/SED_WILL_OVERRIDE_HOSTNAME/${HOSTNAME}/" /etc/kubernetes/kubelet 
+      groupadd docker
+      usermod -a -G docker vagrant
       systemctl enable kube-proxy kubelet docker
       systemctl start kube-proxy kubelet docker
       sleep 5
-      systemctl status kube-proxy kubelet docker 
+      systemctl status kube-proxy kubelet docker
+       
     SHELL
   end
 end
@@ -66,10 +69,9 @@ end
       cp #{share_path}/etc/yum.repos.d/docker.repo /etc/yum.repos.d
       yum clean all
       yum --enablerepo=virt7-docker-common-release -y install rsync wget emacs-nox ntp kubernetes docker
-      echo '(setq backup-directory-alist `(("." . "~/.saves")))' >> /home/vagrant/.emacs
-      echo '(setq backup-by-copying t)' >> /home/vagrant/.emacs
-      chown vagrant:vagrant /home/vagrant/.emacs
-      cp /home/vagrant/.emacs /root/
+      cp #{share_path}/emacs_template ~vagrant/.emacs
+      chown vagrant:vagrant ~vagrant/.emacs
+      cp ~vagrant/.emacs /root/
       chown root:root /root/.emacs 
       cp -f #{share_path}/etc/hosts /etc/hosts
       rm -f /etc/localtime
